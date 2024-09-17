@@ -42,6 +42,16 @@ var uploadCmd = &cobra.Command{
 		writer.WriteField("name", name)
 		writer.WriteField("version", version)
 
+		// Get file info
+		fileInfo, err := file.Stat()
+		if err != nil {
+			return fmt.Errorf("failed to get file info: %w", err)
+		}
+
+		// Add modification time to the form data
+		modTime := fileInfo.ModTime().Unix()
+		writer.WriteField("modTime", fmt.Sprintf("%d", modTime))
+
 		err = writer.Close()
 		if err != nil {
 			return fmt.Errorf("failed to close multipart writer: %w", err)

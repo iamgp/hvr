@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/your-username/hamilton-venus-registry/internal/services"
 )
@@ -36,6 +38,15 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 		}
 		defer file.Close()
 
+		modTimeStr := r.FormValue("modTime")
+		modTime := time.Now() // Default to current time
+		if modTimeStr != "" {
+			modTimeUnix, err := strconv.ParseInt(modTimeStr, 10, 64)
+			if err == nil {
+				modTime = time.Unix(modTimeUnix, 0)
+			}
+		}
+
 		log.Printf("Uploading file: %s, name: %s, version: %s", header.Filename, name, version)
 
 		// Create a buffer to store our zipped file
@@ -61,8 +72,8 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 		// Close the zip writer
 		zipWriter.Close()
 
-		// Now upload the zipped file
-		err = s.Upload(name, version, zipBuffer)
+		// Now upload the zipped file with the modification time
+		err = s.Upload(name, version, zipBuffer, modTime)
 		if err != nil {
 			log.Printf("Error uploading file: %v", err)
 			http.Error(w, fmt.Sprintf("Error uploading file: %v", err), http.StatusInternalServerError)
@@ -83,26 +94,31 @@ func DownloadHandler(s *services.LibraryService) http.HandlerFunc {
 
 		name := r.URL.Query().Get("name")
 		version := r.URL.Query().Get("version")
+
 		if name == "" || version == "" {
-			http.Error(w, "Missing name or version parameter", http.StatusBadRequest)
+			http.Error(w, "Name and version are required", http.StatusBadRequest)
 			return
 		}
 
-		file, err := s.Download(name, version)
+		fileContent, modTime, err := s.Download(name, version)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
+			log.Printf("Error downloading file: %v", err)
+			http.Error(w, fmt.Sprintf("Error downloading file: %v", err), http.StatusInternalServerError)
 			return
 		}
-		defer file.Close()
 
-		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s.zip", name, version))
-		_, err = io.Copy(w, file)
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("X-File-ModTime", fmt.Sprintf("%d", modTime.Unix()))
+
+		_, err = w.Write(fileContent)
 		if err != nil {
-			log.Printf("Error sending file: %v", err)
+			log.Printf("Error writing file content to response: %v", err)
 			http.Error(w, "Error sending file", http.StatusInternalServerError)
 			return
 		}
+
+		log.Printf("File %s-%s.zip downloaded successfully", name, version)
 	}
 }
 

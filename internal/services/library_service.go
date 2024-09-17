@@ -2,6 +2,7 @@ package services
 
 import (
 	"io"
+	"time"
 
 	"github.com/your-username/hamilton-venus-registry/internal/models"
 	"github.com/your-username/hamilton-venus-registry/internal/storage"
@@ -19,8 +20,8 @@ func NewLibraryService(db *storage.SQLiteDatabase, fs storage.FileStore) *Librar
 	}
 }
 
-func (s *LibraryService) Upload(name, version string, data io.Reader) error {
-	filePath, err := s.fileStore.Save(name, version, data)
+func (s *LibraryService) Upload(name, version string, data io.Reader, modTime time.Time) error {
+	filePath, err := s.fileStore.Save(name, version, data, modTime)
 	if err != nil {
 		return err
 	}
@@ -34,13 +35,18 @@ func (s *LibraryService) Upload(name, version string, data io.Reader) error {
 	return s.db.Save(library)
 }
 
-func (s *LibraryService) Download(name, version string) (io.ReadCloser, error) {
+func (s *LibraryService) Download(name, version string) ([]byte, time.Time, error) {
 	library, err := s.db.Get(name, version)
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
-	return s.fileStore.Get(library.FilePath)
+	fileContent, modTime, err := s.fileStore.Get(library.FilePath)
+	if err != nil {
+		return nil, time.Time{}, err
+	}
+
+	return fileContent, modTime, nil
 }
 
 func (s *LibraryService) Search(query string) ([]models.Library, error) {
