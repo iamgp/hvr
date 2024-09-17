@@ -31,7 +31,7 @@ var downloadCmd = &cobra.Command{
 
 		filename := getFilenameFromHeader(resp.Header.Get("Content-Disposition"))
 		if filename == "" {
-			filename = fmt.Sprintf("%s-%s", name, version)
+			filename = fmt.Sprintf("%s-%s.zip", name, version)
 		}
 
 		out, err := os.Create(filename)

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"archive/zip"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -36,7 +38,31 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 
 		log.Printf("Uploading file: %s, name: %s, version: %s", header.Filename, name, version)
 
-		err = s.Upload(name, version, file)
+		// Create a buffer to store our zipped file
+		zipBuffer := new(bytes.Buffer)
+		zipWriter := zip.NewWriter(zipBuffer)
+
+		// Create a new file inside the zip archive
+		zipFile, err := zipWriter.Create(header.Filename)
+		if err != nil {
+			log.Printf("Error creating zip file: %v", err)
+			http.Error(w, "Error creating zip file", http.StatusInternalServerError)
+			return
+		}
+
+		// Copy the uploaded file data to the zip file
+		_, err = io.Copy(zipFile, file)
+		if err != nil {
+			log.Printf("Error copying file to zip: %v", err)
+			http.Error(w, "Error copying file to zip", http.StatusInternalServerError)
+			return
+		}
+
+		// Close the zip writer
+		zipWriter.Close()
+
+		// Now upload the zipped file
+		err = s.Upload(name, version, zipBuffer)
 		if err != nil {
 			log.Printf("Error uploading file: %v", err)
 			http.Error(w, fmt.Sprintf("Error uploading file: %v", err), http.StatusInternalServerError)
@@ -69,9 +95,14 @@ func DownloadHandler(s *services.LibraryService) http.HandlerFunc {
 		}
 		defer file.Close()
 
-		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s.zip", name, version))
-		io.Copy(w, file)
+		_, err = io.Copy(w, file)
+		if err != nil {
+			log.Printf("Error sending file: %v", err)
+			http.Error(w, "Error sending file", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
