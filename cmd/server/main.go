@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/your-username/hamilton-venus-registry/internal/api/handlers"
-	"github.com/your-username/hamilton-venus-registry/internal/services"
-	"github.com/your-username/hamilton-venus-registry/internal/storage"
+	"github.com/iamgp/hvr/internal/api/handlers"
+	"github.com/iamgp/hvr/internal/services"
+	"github.com/iamgp/hvr/internal/storage"
 )
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {

@@ -1,12 +1,14 @@
 package services
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"time"
 
-	"github.com/your-username/hamilton-venus-registry/internal/models"
-	"github.com/your-username/hamilton-venus-registry/internal/storage"
+	"github.com/iamgp/hvr/internal/models"
+	"github.com/iamgp/hvr/internal/storage"
 )
 
 type LibraryService struct {
@@ -21,7 +23,7 @@ func NewLibraryService(db *storage.SQLiteDatabase, fs storage.FileStore) *Librar
 	}
 }
 
-func (s *LibraryService) Upload(name, version string, data io.Reader, modTime time.Time) error {
+func (s *LibraryService) Upload(name, version, description, author, repoURL string, data io.Reader, modTime time.Time) error {
 	// Check if the library version already exists
 	_, err := s.db.Get(name, version)
 	if err == nil {
@@ -29,21 +31,31 @@ func (s *LibraryService) Upload(name, version string, data io.Reader, modTime ti
 		return fmt.Errorf("library version already exists: %s %s", name, version)
 	}
 
-	filePath, err := s.fileStore.Save(name, version, data, modTime)
+	// Calculate hash
+	hasher := sha256.New()
+	teeReader := io.TeeReader(data, hasher)
+
+	filePath, err := s.fileStore.Save(name, version, teeReader, modTime)
 	if err != nil {
 		return err
 	}
 
+	hash := hex.EncodeToString(hasher.Sum(nil))
+
 	library := models.Library{
-		Name:     name,
-		Version:  version,
-		FilePath: filePath,
+		Name:        name,
+		Version:     version,
+		Description: description,
+		Author:      author,
+		RepoURL:     repoURL,
+		FilePath:    filePath,
+		Hash:        hash,
 	}
 
 	return s.db.Save(library)
 }
 
-func (s *LibraryService) Download(name, version string) ([]byte, time.Time, error) {
+func (s *LibraryService) Download(name, version string) ([]byte, time.Time, string, error) {
 	var library models.Library
 	var err error
 
@@ -54,15 +66,15 @@ func (s *LibraryService) Download(name, version string) ([]byte, time.Time, erro
 	}
 
 	if err != nil {
-		return nil, time.Time{}, err
+		return nil, time.Time{}, "", err
 	}
 
 	fileContent, modTime, err := s.fileStore.Get(library.FilePath)
 	if err != nil {
-		return nil, time.Time{}, err
+		return nil, time.Time{}, "", err
 	}
 
-	return fileContent, modTime, nil
+	return fileContent, modTime, library.Hash, nil
 }
 
 func (s *LibraryService) Search(query string) ([]models.Library, error) {

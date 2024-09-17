@@ -1,4 +1,7 @@
-.PHONY: all build-server build-client run-server
+.PHONY: all build-server build-client run-server clean reset-db
+
+# Assuming the database file is named hvpm.db and is in the root directory
+DB_FILE := ./hvpm.db
 
 all: build-server build-client
 
@@ -17,3 +20,7 @@ run-server: build-server
 clean:
 	@echo "Cleaning up..."
 	@rm -f hvr-server hvr
+
+reset-db:
+	@echo "Resetting database..."
+	@if [ -f $(DB_FILE) ]; then rm $(DB_FILE) && echo "Database deleted."; else echo "Database file not found."; fi

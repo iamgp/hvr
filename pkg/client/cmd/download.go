@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -46,17 +48,27 @@ var downloadCmd = &cobra.Command{
 		}
 		fmt.Printf("Saving file as: %s\n", filename)
 
+		expectedHash := resp.Header.Get("X-File-Hash")
+		hasher := sha256.New()
+		teeReader := io.TeeReader(resp.Body, hasher)
+
 		out, err := os.Create(filename)
 		if err != nil {
 			return fmt.Errorf("failed to create file: %w", err)
 		}
 		defer out.Close()
 
-		n, err := io.Copy(out, resp.Body)
+		n, err := io.Copy(out, teeReader)
 		if err != nil {
 			return fmt.Errorf("failed to save file: %w", err)
 		}
 		fmt.Printf("Wrote %d bytes to file\n", n)
+
+		actualHash := hex.EncodeToString(hasher.Sum(nil))
+		if actualHash != expectedHash {
+			os.Remove(filename) // Delete the file if hash doesn't match
+			return fmt.Errorf("hash mismatch: expected %s, got %s", expectedHash, actualHash)
+		}
 
 		modTimeStr := resp.Header.Get("X-File-ModTime")
 		if modTimeStr != "" {
@@ -71,7 +83,7 @@ var downloadCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("Library downloaded successfully as %s\n", filename)
+		fmt.Printf("Library downloaded and verified successfully as %s\n", filename)
 		return nil
 	},
 }

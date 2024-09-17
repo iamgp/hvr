@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/your-username/hamilton-venus-registry/internal/services"
+	"github.com/iamgp/hvr/internal/services"
 )
 
 func UploadHandler(s *services.LibraryService) http.HandlerFunc {
@@ -74,7 +74,11 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 		zipWriter.Close()
 
 		// Now upload the zipped file with the modification time
-		err = s.Upload(name, version, zipBuffer, modTime)
+		description := r.FormValue("description")
+		author := r.FormValue("author")
+		repoURL := r.FormValue("repoURL")
+
+		err = s.Upload(name, version, description, author, repoURL, zipBuffer, modTime)
 		if err != nil {
 			if strings.Contains(err.Error(), "library version already exists") {
 				log.Printf("Attempt to overwrite existing version: %v", err)
@@ -110,7 +114,7 @@ func DownloadHandler(s *services.LibraryService) http.HandlerFunc {
 			version = "latest"
 		}
 
-		fileContent, modTime, err := s.Download(name, version)
+		fileContent, modTime, hash, err := s.Download(name, version)
 		if err != nil {
 			log.Printf("Error downloading file: %v", err)
 			http.Error(w, fmt.Sprintf("Error downloading file: %v", err), http.StatusInternalServerError)
@@ -120,6 +124,7 @@ func DownloadHandler(s *services.LibraryService) http.HandlerFunc {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s.zip", name, version))
 		w.Header().Set("Content-Type", "application/zip")
 		w.Header().Set("X-File-ModTime", fmt.Sprintf("%d", modTime.Unix()))
+		w.Header().Set("X-File-Hash", hash)
 
 		_, err = w.Write(fileContent)
 		if err != nil {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/your-username/hamilton-venus-registry/pkg/client/cmd"
+	"github.com/iamgp/hvr/pkg/client/cmd"
 )
 
 func main() {

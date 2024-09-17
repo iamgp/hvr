@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/iamgp/hvr/pkg/client/metadata"
 	"github.com/spf13/cobra"
-	"github.com/your-username/hamilton-venus-registry/pkg/client/metadata"
 )
 
 var uploadMetaCmd = &cobra.Command{
@@ -51,7 +51,7 @@ var uploadMetaCmd = &cobra.Command{
 		tempFile.Seek(0, 0)
 
 		// Use the existing upload logic
-		return uploadLibrary(tempFile.Name(), meta.Name, meta.Version)
+		return uploadLibrary(tempFile.Name(), meta.Name, meta.Version, meta.Description, meta.Author, meta.RepoURL)
 	},
 }
 

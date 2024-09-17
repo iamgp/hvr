@@ -1,58 +1,37 @@
 # Hamilton Venus Registry
 
-Hamilton Venus Registry is a package management system for Hamilton Venus library files, similar to npm or PyPI. It allows users to upload, download, and search for libraries.
+Hamilton Venus Registry is a package management system for storing and retrieving libraries.
 
-## Project Structure
+## Features
 
-The project is structured as follows:
+- Upload libraries with metadata (name, version, description, author, repository URL)
+- Download libraries (specific version or latest)
+- Search for libraries
+- File integrity verification using SHA-256 hash
+- Metadata-based uploads using JSON files
+- Preservation of file modification times
 
-- `cmd/server/`: Contains the main server application.
-- `internal/`: Contains the core logic of the application.
-  - `api/handlers/`: HTTP handlers for the server.
-  - `models/`: Data models used in the application.
-  - `services/`: Business logic for managing libraries.
-  - `storage/`: Database interactions.
-- `pkg/client/`: Contains the CLI client for interacting with the server.
-
-## Getting Started
-
-### Prerequisites
-
-- Go 1.16 or later
-- SQLite3
-
-### Installation
+## Installation
 
 1. Clone the repository:
 
    ```
-   git clone https://github.com/your-username/hamilton-venus-registry.git
-   cd hamilton-venus-registry
+   git clone github.com/iamgp/hvr.git
    ```
 
-2. Install dependencies:
-
+2. Build the server and client:
    ```
-   go mod download
-   ```
-
-3. Build the server:
-
-   ```
-   go build -o hvr-server ./cmd/server
+   make all
    ```
 
-4. Build the client:
-   ```
-   go build -o hvr ./pkg/client
-   ```
+## Usage
 
-### Running the Server
+### Starting the Server
 
-Run the server with:
+Run the server using:
 
 ```
-./hvr-server
+make run
 ```
 
 The server will start on `localhost:8080`.
@@ -64,31 +43,65 @@ The CLI client provides commands to interact with the server:
 1. Upload a library:
 
    ```
-   ./hvr upload path/to/library.zip --name my-library --version 1.0.0
+   ./hvr upload <file> --name <library-name> --version <version>
    ```
 
-2. Download a library:
+2. Upload a library using a metadata file:
 
    ```
-   ./hvr download my-library 1.0.0
+   ./hvr uploadmeta <metadata-file>
    ```
 
-3. Search for libraries:
+   Example metadata file (library_meta.json):
+
+   ```json
+   {
+     "name": "my-library",
+     "version": "1.0.0",
+     "description": "A useful library",
+     "author": "John Doe",
+     "repo_url": "https://github.com/johndoe/my-library",
+     "files": ["src/*.go", "README.md", "LICENSE"]
+   }
    ```
-   ./hvr search query
+
+3. Download a library:
+
+   ```
+   ./hvr download <library-name> [version]
+   ```
+
+   If version is omitted, it will download the latest version.
+
+4. Search for libraries:
+   ```
+   ./hvr search <query>
    ```
 
 ## How It Works
 
-1. **Server**: The server uses an SQLite database to store library information and file data. It provides HTTP endpoints for uploading, downloading, and searching libraries.
+1. **Server**: The server uses an SQLite database to store library information and a local file system to store library files. It provides HTTP endpoints for uploading, downloading, and searching libraries.
 
 2. **Client**: The CLI client sends HTTP requests to the server to perform operations.
 
-3. **Upload**: When a library is uploaded, it's stored in the database with its name, version, and file data.
+3. **Upload**: When a library is uploaded, it's stored in the database with its name, version, description, author, repository URL, file path, and a SHA-256 hash of the file contents.
 
-4. **Download**: When a library is downloaded, the server retrieves the file data from the database and sends it to the client.
+4. **Download**: When a library is downloaded, the server retrieves the file from storage, and the client verifies the file integrity using the stored hash.
 
 5. **Search**: The search functionality allows users to find libraries by name.
+
+6. **Metadata Upload**: Users can provide a JSON metadata file that specifies multiple files to be included in the library, along with other metadata.
+
+7. **File Integrity**: SHA-256 hashes are used to ensure the integrity of downloaded files.
+
+8. **Modification Time**: The original modification time of uploaded files is preserved and restored upon download.
+
+## Development
+
+- Reset the database:
+  ```
+  make reset-db
+  ```
 
 ## Contributing
 

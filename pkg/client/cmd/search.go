@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/iamgp/hvr/internal/models"
 	"github.com/spf13/cobra"
-	"github.com/your-username/hamilton-venus-registry/internal/models"
 )
 
 var searchCmd = &cobra.Command{

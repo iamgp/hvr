@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/iamgp/hvr/internal/models"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/your-username/hamilton-venus-registry/internal/models"
 )
 
 type SQLiteDatabase struct {
@@ -34,7 +34,11 @@ func createTable(db *sql.DB) error {
 		CREATE TABLE IF NOT EXISTS libraries (
 			name TEXT,
 			version TEXT,
+			description TEXT,
+			author TEXT,
+			repo_url TEXT,
 			file_path TEXT,
+			hash TEXT,
 			PRIMARY KEY (name, version)
 		)
 	`)
@@ -42,15 +46,15 @@ func createTable(db *sql.DB) error {
 }
 
 func (db *SQLiteDatabase) Save(library models.Library) error {
-	_, err := db.db.Exec("INSERT OR REPLACE INTO libraries (name, version, file_path) VALUES (?, ?, ?)",
-		library.Name, library.Version, library.FilePath)
+	_, err := db.db.Exec("INSERT OR REPLACE INTO libraries (name, version, description, author, repo_url, file_path, hash) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		library.Name, library.Version, library.Description, library.Author, library.RepoURL, library.FilePath, library.Hash)
 	return err
 }
 
 func (db *SQLiteDatabase) Get(name, version string) (models.Library, error) {
 	var library models.Library
-	err := db.db.QueryRow("SELECT name, version, file_path FROM libraries WHERE name = ? AND version = ?",
-		name, version).Scan(&library.Name, &library.Version, &library.FilePath)
+	err := db.db.QueryRow("SELECT name, version, description, author, repo_url, file_path, hash FROM libraries WHERE name = ? AND version = ?",
+		name, version).Scan(&library.Name, &library.Version, &library.Description, &library.Author, &library.RepoURL, &library.FilePath, &library.Hash)
 	if err == sql.ErrNoRows {
 		return models.Library{}, fmt.Errorf("library %s version %s not found", name, version)
 	}
@@ -81,7 +85,7 @@ func (db *SQLiteDatabase) Close() error {
 
 func (db *SQLiteDatabase) GetLatest(name string) (models.Library, error) {
 	var library models.Library
-	err := db.db.QueryRow("SELECT name, version, file_path FROM libraries WHERE name = ? ORDER BY version DESC LIMIT 1", name).Scan(&library.Name, &library.Version, &library.FilePath)
+	err := db.db.QueryRow("SELECT name, version, description, author, repo_url, file_path, hash FROM libraries WHERE name = ? ORDER BY version DESC LIMIT 1", name).Scan(&library.Name, &library.Version, &library.Description, &library.Author, &library.RepoURL, &library.FilePath, &library.Hash)
 	if err != nil {
 		return models.Library{}, err
 	}

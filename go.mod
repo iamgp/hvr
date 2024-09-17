@@ -1,4 +1,4 @@
-module github.com/your-username/hamilton-venus-registry
+module github.com/iamgp/hvr
 
 go 1.16
 
