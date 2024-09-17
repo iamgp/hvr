@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/iamgp/hvr/internal/services"
 )
 
@@ -31,6 +32,13 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 
 		name := r.FormValue("name")
 		version := r.FormValue("version")
+		_, err = semver.NewVersion(version)
+		if err != nil {
+			log.Printf("Invalid version: %v", err)
+			http.Error(w, "Invalid version", http.StatusBadRequest)
+			return
+		}
+
 		file, header, err := r.FormFile("file")
 		if err != nil {
 			log.Printf("Error retrieving file: %v", err)
@@ -77,8 +85,17 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 		description := r.FormValue("description")
 		author := r.FormValue("author")
 		repoURL := r.FormValue("repoURL")
+		dependenciesJSON := r.FormValue("dependencies")
 
-		err = s.Upload(name, version, description, author, repoURL, zipBuffer, modTime)
+		var dependencies map[string]string
+		err = json.Unmarshal([]byte(dependenciesJSON), &dependencies)
+		if err != nil {
+			log.Printf("Error parsing dependencies: %v", err)
+			http.Error(w, "Error parsing dependencies", http.StatusBadRequest)
+			return
+		}
+
+		err = s.Upload(name, version, description, author, repoURL, dependencies, zipBuffer, modTime)
 		if err != nil {
 			if strings.Contains(err.Error(), "library version already exists") {
 				log.Printf("Attempt to overwrite existing version: %v", err)
@@ -156,5 +173,32 @@ func SearchHandler(s *services.LibraryService) http.HandlerFunc {
 			return
 		}
 		json.NewEncoder(w).Encode(results)
+	}
+}
+
+func ResolveDependenciesHandler(s *services.LibraryService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		name := r.URL.Query().Get("name")
+		version := r.URL.Query().Get("version")
+
+		if name == "" || version == "" {
+			http.Error(w, "Name and version are required", http.StatusBadRequest)
+			return
+		}
+
+		dependencies, err := s.ResolveLibraryDependencies(name, version)
+		if err != nil {
+			log.Printf("Error resolving dependencies: %v", err)
+			http.Error(w, fmt.Sprintf("Error resolving dependencies: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(dependencies)
 	}
 }

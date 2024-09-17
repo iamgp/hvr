@@ -15,8 +15,9 @@ var uploadCmd = &cobra.Command{
 		description, _ := cmd.Flags().GetString("description")
 		author, _ := cmd.Flags().GetString("author")
 		repoURL, _ := cmd.Flags().GetString("repo-url")
+		dependencies, _ := cmd.Flags().GetStringToString("dependencies")
 
-		return uploadLibrary(filePath, name, version, description, author, repoURL)
+		return uploadLibrary(filePath, name, version, description, author, repoURL, dependencies)
 	},
 }
 
@@ -27,6 +28,7 @@ func init() {
 	uploadCmd.Flags().String("description", "", "Description of the library")
 	uploadCmd.Flags().String("author", "", "Author of the library")
 	uploadCmd.Flags().String("repo-url", "", "Repository URL of the library")
+	uploadCmd.Flags().StringToString("dependencies", nil, "Dependencies of the library (format: name=version)")
 	uploadCmd.MarkFlagRequired("name")
 	uploadCmd.MarkFlagRequired("version")
 }

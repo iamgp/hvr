@@ -4,12 +4,14 @@ Hamilton Venus Registry is a package management system for storing and retrievin
 
 ## Features
 
-- Upload libraries with metadata (name, version, description, author, repository URL)
+- Upload libraries with metadata (name, version, description, author, repository URL, dependencies)
 - Download libraries (specific version or latest)
 - Search for libraries
 - File integrity verification using SHA-256 hash
 - Metadata-based uploads using JSON files
 - Preservation of file modification times
+- Semantic versioning support
+- Dependency management
 
 ## Installation
 
@@ -61,7 +63,11 @@ The CLI client provides commands to interact with the server:
      "description": "A useful library",
      "author": "John Doe",
      "repo_url": "https://github.com/johndoe/my-library",
-     "files": ["src/*.go", "README.md", "LICENSE"]
+     "files": ["src/*.go", "README.md", "LICENSE"],
+     "dependencies": {
+       "another-lib": "^2.0.0",
+       "util-lib": "~1.5.0"
+     }
    }
    ```
 
@@ -84,7 +90,7 @@ The CLI client provides commands to interact with the server:
 
 2. **Client**: The CLI client sends HTTP requests to the server to perform operations.
 
-3. **Upload**: When a library is uploaded, it's stored in the database with its name, version, description, author, repository URL, file path, and a SHA-256 hash of the file contents.
+3. **Upload**: When a library is uploaded, it's stored in the database with its name, version (using semantic versioning), description, author, repository URL, file path, dependencies, and a SHA-256 hash of the file contents.
 
 4. **Download**: When a library is downloaded, the server retrieves the file from storage, and the client verifies the file integrity using the stored hash.
 
@@ -95,6 +101,10 @@ The CLI client provides commands to interact with the server:
 7. **File Integrity**: SHA-256 hashes are used to ensure the integrity of downloaded files.
 
 8. **Modification Time**: The original modification time of uploaded files is preserved and restored upon download.
+
+9. **Semantic Versioning**: The system uses semantic versioning for version management, allowing for more precise version control and dependency resolution.
+
+10. **Dependency Management**: Libraries can specify their dependencies with version constraints, enabling better management of complex dependency trees.
 
 ## Development
 

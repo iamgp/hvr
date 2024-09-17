@@ -32,6 +32,7 @@ func main() {
     http.HandleFunc("/upload", handlers.UploadHandler(libraryService))
     http.HandleFunc("/download", handlers.DownloadHandler(libraryService))
     http.HandleFunc("/search", handlers.SearchHandler(libraryService))
+    http.HandleFunc("/resolve", handlers.ResolveDependenciesHandler(libraryService))
 
     log.Println("Server starting on :8080")
     log.Fatal(http.ListenAndServe(":8080", nil))

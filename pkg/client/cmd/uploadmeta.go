@@ -51,7 +51,7 @@ var uploadMetaCmd = &cobra.Command{
 		tempFile.Seek(0, 0)
 
 		// Use the existing upload logic
-		return uploadLibrary(tempFile.Name(), meta.Name, meta.Version, meta.Description, meta.Author, meta.RepoURL)
+		return uploadLibrary(tempFile.Name(), meta.Name, meta.Version, meta.Description, meta.Author, meta.RepoURL, meta.Dependencies)
 	},
 }
 

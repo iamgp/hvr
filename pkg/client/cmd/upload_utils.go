@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -10,7 +11,7 @@ import (
 	"path/filepath"
 )
 
-func uploadLibrary(filePath, name, version, description, author, repoURL string) error {
+func uploadLibrary(filePath, name, version, description, author, repoURL string, dependencies map[string]string) error {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %w", err)
@@ -35,6 +36,12 @@ func uploadLibrary(filePath, name, version, description, author, repoURL string)
 	writer.WriteField("description", description)
 	writer.WriteField("author", author)
 	writer.WriteField("repoURL", repoURL)
+
+	dependenciesJSON, err := json.Marshal(dependencies)
+	if err != nil {
+		return fmt.Errorf("failed to marshal dependencies: %w", err)
+	}
+	writer.WriteField("dependencies", string(dependenciesJSON))
 
 	// Add modification time to the form data
 	fileInfo, err := file.Stat()

@@ -7,12 +7,13 @@ import (
 )
 
 type Metadata struct {
-	Name        string   `json:"name"`
-	Version     string   `json:"version"`
-	Description string   `json:"description"`
-	Author      string   `json:"author"`
-	RepoURL     string   `json:"repo_url"`
-	Files       []string `json:"files"`
+	Name         string            `json:"name"`
+	Version      string            `json:"version"`
+	Description  string            `json:"description"`
+	Author       string            `json:"author"`
+	RepoURL      string            `json:"repo_url"`
+	Files        []string          `json:"files"`
+	Dependencies map[string]string `json:"dependencies"`
 }
 
 func ParseMetadataFile(filename string) (*Metadata, error) {

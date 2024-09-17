@@ -19,4 +19,6 @@ func init() {
 	rootCmd.AddCommand(downloadCmd)
 	rootCmd.AddCommand(searchCmd)
 	rootCmd.AddCommand(uploadMetaCmd)
+	rootCmd.AddCommand(resolveCmd)
+	rootCmd.AddCommand(installCmd)
 }
