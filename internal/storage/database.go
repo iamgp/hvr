@@ -78,3 +78,12 @@ func (db *SQLiteDatabase) Search(query string) ([]models.Library, error) {
 func (db *SQLiteDatabase) Close() error {
 	return db.db.Close()
 }
+
+func (db *SQLiteDatabase) GetLatest(name string) (models.Library, error) {
+	var library models.Library
+	err := db.db.QueryRow("SELECT name, version, file_path FROM libraries WHERE name = ? ORDER BY version DESC LIMIT 1", name).Scan(&library.Name, &library.Version, &library.FilePath)
+	if err != nil {
+		return models.Library{}, err
+	}
+	return library, nil
+}

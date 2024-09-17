@@ -101,9 +101,13 @@ func DownloadHandler(s *services.LibraryService) http.HandlerFunc {
 		name := r.URL.Query().Get("name")
 		version := r.URL.Query().Get("version")
 
-		if name == "" || version == "" {
-			http.Error(w, "Name and version are required", http.StatusBadRequest)
+		if name == "" {
+			http.Error(w, "Name is required", http.StatusBadRequest)
 			return
+		}
+
+		if version == "" {
+			version = "latest"
 		}
 
 		fileContent, modTime, err := s.Download(name, version)

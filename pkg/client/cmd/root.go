@@ -18,4 +18,5 @@ func init() {
 	rootCmd.AddCommand(uploadCmd)
 	rootCmd.AddCommand(downloadCmd)
 	rootCmd.AddCommand(searchCmd)
+	rootCmd.AddCommand(uploadMetaCmd)
 }

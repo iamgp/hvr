@@ -14,12 +14,15 @@ import (
 )
 
 var downloadCmd = &cobra.Command{
-	Use:   "download <name> <version>",
+	Use:   "download <name> [version]",
 	Short: "Download a library from the registry",
-	Args:  cobra.ExactArgs(2),
+	Args:  cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		version := args[1]
+		version := "latest"
+		if len(args) > 1 {
+			version = args[1]
+		}
 
 		url := fmt.Sprintf("http://localhost:8080/download?name=%s&version=%s", name, version)
 		fmt.Printf("Downloading from: %s\n", url)

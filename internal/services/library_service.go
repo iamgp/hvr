@@ -44,7 +44,15 @@ func (s *LibraryService) Upload(name, version string, data io.Reader, modTime ti
 }
 
 func (s *LibraryService) Download(name, version string) ([]byte, time.Time, error) {
-	library, err := s.db.Get(name, version)
+	var library models.Library
+	var err error
+
+	if version == "latest" {
+		library, err = s.db.GetLatest(name)
+	} else {
+		library, err = s.db.Get(name, version)
+	}
+
 	if err != nil {
 		return nil, time.Time{}, err
 	}
