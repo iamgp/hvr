@@ -70,9 +70,15 @@ var uploadCmd = &cobra.Command{
 		}
 		defer resp.Body.Close()
 
+		responseBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %w", err)
+		}
 		if resp.StatusCode != http.StatusCreated {
-			body, _ := io.ReadAll(resp.Body)
-			return fmt.Errorf("upload failed with status: %s, body: %s", resp.Status, string(body))
+			if resp.StatusCode == http.StatusConflict {
+				return fmt.Errorf("upload failed: %s", string(responseBody))
+			}
+			return fmt.Errorf("upload failed with status: %s, body: %s", resp.Status, string(responseBody))
 		}
 
 		fmt.Printf("Library %s version %s uploaded successfully\n", name, version)

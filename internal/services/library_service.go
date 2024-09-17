@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"io"
 	"time"
 
@@ -21,6 +22,13 @@ func NewLibraryService(db *storage.SQLiteDatabase, fs storage.FileStore) *Librar
 }
 
 func (s *LibraryService) Upload(name, version string, data io.Reader, modTime time.Time) error {
+	// Check if the library version already exists
+	_, err := s.db.Get(name, version)
+	if err == nil {
+		// Library version already exists
+		return fmt.Errorf("library version already exists: %s %s", name, version)
+	}
+
 	filePath, err := s.fileStore.Save(name, version, data, modTime)
 	if err != nil {
 		return err

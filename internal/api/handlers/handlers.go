@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/your-username/hamilton-venus-registry/internal/services"
@@ -75,6 +76,11 @@ func UploadHandler(s *services.LibraryService) http.HandlerFunc {
 		// Now upload the zipped file with the modification time
 		err = s.Upload(name, version, zipBuffer, modTime)
 		if err != nil {
+			if strings.Contains(err.Error(), "library version already exists") {
+				log.Printf("Attempt to overwrite existing version: %v", err)
+				http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusConflict)
+				return
+			}
 			log.Printf("Error uploading file: %v", err)
 			http.Error(w, fmt.Sprintf("Error uploading file: %v", err), http.StatusInternalServerError)
 			return

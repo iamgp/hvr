@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -13,15 +10,12 @@ var rootCmd = &cobra.Command{
 	Long:  `A command-line interface for interacting with the Hamilton Venus Registry.`,
 }
 
-func Execute(args ...string) {
-	rootCmd.SetArgs(args)
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+func Execute() error {
+	return rootCmd.Execute()
 }
 
 func init() {
-	// Add any global flags here
+	rootCmd.AddCommand(uploadCmd)
+	rootCmd.AddCommand(downloadCmd)
+	rootCmd.AddCommand(searchCmd)
 }

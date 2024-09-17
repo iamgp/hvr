@@ -78,18 +78,18 @@ func (m uploadModel) View() string {
 	return b.String()
 }
 
-func RunUploadTUI() (string, string, string) {
+func RunUploadTUI() (string, string, string, bool) {
 	m := uploadModel{}
 	p := tea.NewProgram(m)
 	finalModel, err := p.Run()
 	if err != nil {
 		fmt.Printf("Error running upload TUI: %v\n", err)
-		return "", "", ""
+		return "", "", "", false
 	}
 
 	if finalModel, ok := finalModel.(uploadModel); ok {
-		return finalModel.name, finalModel.version, finalModel.file
+		return finalModel.name, finalModel.version, finalModel.file, true
 	}
 
-	return "", "", ""
+	return "", "", "", false
 }
