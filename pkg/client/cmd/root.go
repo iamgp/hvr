@@ -13,7 +13,9 @@ var rootCmd = &cobra.Command{
 	Long:  `A command-line interface for interacting with the Hamilton Venus Registry.`,
 }
 
-func Execute() {
+func Execute(args ...string) {
+	rootCmd.SetArgs(args)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
