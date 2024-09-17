@@ -1,0 +1,11 @@
+{
+  "name": "lib-a",
+  "version": "1.0.0",
+  "description": "Test Library A",
+  "author": "Test Author",
+  "repo_url": "https://github.com/test/lib-a",
+  "files": ["lib-a.go", "README.md"],
+  "dependencies": {
+    "lib-b": "^2.0.0"
+  }
+}

@@ -24,3 +24,14 @@ clean:
 reset-db:
 	@echo "Resetting database..."
 	@if [ -f $(DB_FILE) ]; then rm $(DB_FILE) && echo "Database deleted."; else echo "Database file not found."; fi
+
+.PHONY: test
+
+test:
+	@echo "Running tests..."
+	@go test ./... -v
+
+test-coverage:
+	@echo "Running tests with coverage..."
+	@go test ./... -coverprofile=coverage.out
+	@go tool cover -html=coverage.out

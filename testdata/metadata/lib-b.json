@@ -1,0 +1,9 @@
+{
+  "name": "lib-b",
+  "version": "2.0.0",
+  "description": "Test Library B",
+  "author": "Another Test Author",
+  "repo_url": "https://github.com/test/lib-b",
+  "files": ["lib-b.go", "README.md"],
+  "dependencies": {}
+}
