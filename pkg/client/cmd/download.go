@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var outputDir string
+
 func downloadLibrary(name, version, destPath string) error {
 	url := fmt.Sprintf("http://localhost:8080/download?name=%s&version=%s", name, version)
 	fmt.Printf("Downloading from: %s\n", url)
@@ -82,16 +84,30 @@ func downloadLibrary(name, version, destPath string) error {
 
 var downloadCmd = &cobra.Command{
 	Use:   "download <name> [version]",
-	Short: "Download a library from the registry",
-	Args:  cobra.RangeArgs(1, 2),
+	Short: "Download a library",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return fmt.Errorf("library name is required")
+		}
 		name := args[0]
 		version := "latest"
 		if len(args) > 1 {
 			version = args[1]
 		}
 
-		return downloadLibrary(name, version, ".")
+		// Use outputDir if specified, otherwise use current directory
+		downloadPath := "."
+		if outputDir != "" {
+			downloadPath = outputDir
+		}
+
+		// Implement actual download logic here
+		err := downloadLibrary(name, version, downloadPath)
+		if err != nil {
+			return fmt.Errorf("failed to download library: %w", err)
+		}
+
+		return nil
 	},
 }
 
@@ -108,4 +124,5 @@ func getFilenameFromHeader(header string) string {
 
 func init() {
 	rootCmd.AddCommand(downloadCmd)
+	downloadCmd.Flags().StringVarP(&outputDir, "output", "o", "", "Output directory for downloaded files")
 }

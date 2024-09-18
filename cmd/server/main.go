@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/iamgp/hvr/internal/api/handlers"
 	"github.com/iamgp/hvr/internal/services"
@@ -15,25 +17,35 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    db, err := storage.NewSQLiteDatabase("./hvpm.db")
-    if err != nil {
-        log.Fatalf("Failed to initialize database: %v", err)
-    }
-    defer db.Close()
+	port := "8080" // default port
+	if len(os.Args) > 1 {
+		port = os.Args[1]
+	}
 
-    fileStore, err := storage.NewLocalFileStore("./library_files")
-    if err != nil {
-        log.Fatalf("Failed to initialize file store: %v", err)
-    }
+	// Validate the port
+	if _, err := strconv.Atoi(port); err != nil {
+		log.Fatalf("Invalid port number: %s", port)
+	}
 
-    libraryService := services.NewLibraryService(db, fileStore)
+	db, err := storage.NewSQLiteDatabase("./hvpm.db")
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer db.Close()
 
-    http.HandleFunc("/", indexHandler)
-    http.HandleFunc("/upload", handlers.UploadHandler(libraryService))
-    http.HandleFunc("/download", handlers.DownloadHandler(libraryService))
-    http.HandleFunc("/search", handlers.SearchHandler(libraryService))
-    http.HandleFunc("/resolve", handlers.ResolveDependenciesHandler(libraryService))
+	fileStore, err := storage.NewLocalFileStore("./library_files")
+	if err != nil {
+		log.Fatalf("Failed to initialize file store: %v", err)
+	}
 
-    log.Println("Server starting on :8080")
-    log.Fatal(http.ListenAndServe(":8080", nil))
+	libraryService := services.NewLibraryService(db, fileStore)
+
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/upload", handlers.UploadHandler(libraryService))
+	http.HandleFunc("/download", handlers.DownloadHandler(libraryService))
+	http.HandleFunc("/search", handlers.SearchHandler(libraryService))
+	http.HandleFunc("/resolve", handlers.ResolveDependenciesHandler(libraryService))
+
+	log.Printf("Server starting on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }

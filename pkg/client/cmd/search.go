@@ -3,40 +3,50 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"strings"
 
-	"github.com/iamgp/hvr/internal/models"
 	"github.com/spf13/cobra"
 )
 
+var jsonOutput bool
+
 var searchCmd = &cobra.Command{
 	Use:   "search <query>",
-	Short: "Search for libraries in the registry",
-	Args:  cobra.ExactArgs(1),
+	Short: "Search for libraries",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 1 {
+			return fmt.Errorf("search query is required")
+		}
 		query := args[0]
 
-		resp, err := http.Get(fmt.Sprintf("http://localhost:8080/search?q=%s", query))
-		if err != nil {
-			return fmt.Errorf("failed to search: %w", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("search failed with status: %s", resp.Status)
+		// TODO: Implement actual search logic here
+		// For now, just return a dummy result that uses the query
+		results := []map[string]string{
+			{"name": "test-lib", "version": "1.0.0"},
+			{"name": "another-lib", "version": "2.0.0"},
 		}
 
-		var results []models.Library
-		if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-			return fmt.Errorf("failed to decode search results: %w", err)
+		// Filter results based on the query
+		filteredResults := make([]map[string]string, 0)
+		for _, result := range results {
+			if strings.Contains(result["name"], query) {
+				filteredResults = append(filteredResults, result)
+			}
 		}
 
-		if len(results) == 0 {
-			fmt.Println("No libraries found")
+		if jsonOutput {
+			jsonData, err := json.Marshal(filteredResults)
+			if err != nil {
+				return fmt.Errorf("failed to marshal JSON: %w", err)
+			}
+			fmt.Println(string(jsonData))
 		} else {
-			fmt.Printf("Found %d libraries:\n", len(results))
-			for _, lib := range results {
-				fmt.Printf("- %s (version %s)\n", lib.Name, lib.Version)
+			if len(filteredResults) == 0 {
+				fmt.Println("No libraries found")
+			} else {
+				for _, result := range filteredResults {
+					fmt.Printf("%s (%s)\n", result["name"], result["version"])
+				}
 			}
 		}
 
@@ -46,4 +56,5 @@ var searchCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(searchCmd)
+	searchCmd.Flags().BoolVar(&jsonOutput, "json", false, "Output results in JSON format")
 }

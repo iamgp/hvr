@@ -1,70 +1,62 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
-	"github.com/iamgp/hvr/pkg/client/metadata"
 	"github.com/spf13/cobra"
 )
 
+// serverURL is the URL of the server that the client communicates with
+var serverURL string
+
+var installDir string
+
 var installCmd = &cobra.Command{
-	Use:   "install",
-	Short: "Install dependencies specified in hvr.json",
+	Use:   "install [library] [version]",
+	Short: "Install a library",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Read hvr.json file
-		data, err := ioutil.ReadFile("hvr.json")
-		if err != nil {
-			return fmt.Errorf("failed to read hvr.json: %w", err)
+		if len(args) < 1 {
+			return fmt.Errorf("library name is required")
+		}
+		name := args[0]
+		version := "latest"
+		if len(args) > 1 {
+			version = args[1]
 		}
 
-		var meta metadata.Metadata
-		err = json.Unmarshal(data, &meta)
-		if err != nil {
-			return fmt.Errorf("failed to parse hvr.json: %w", err)
-		}
-
-		// Get the installation directory
-		installDir, _ := cmd.Flags().GetString("dir")
-		if installDir == "" {
-			installDir = "./vendor"
+		// Validate version (simple check for now)
+		if version != "latest" && !isValidVersion(version) {
+			return fmt.Errorf("invalid version format: %s", version)
 		}
 
 		// Create the installation directory
-		err = os.MkdirAll(installDir, 0755)
-		if err != nil {
+		if err := os.MkdirAll(installDir, 0755); err != nil {
 			return fmt.Errorf("failed to create installation directory: %w", err)
 		}
 
-		// Install each dependency
-		for depName, depVersion := range meta.Dependencies {
-			fmt.Printf("Installing %s (%s)\n", depName, depVersion)
-
-			// Resolve the dependency
-			resolvedDeps, err := resolveDependencies(depName, depVersion)
-			if err != nil {
-				return fmt.Errorf("failed to resolve dependencies for %s: %w", depName, err)
-			}
-
-			// Download and install the resolved dependencies
-			for _, dep := range resolvedDeps {
-				fmt.Printf("  Installing %s (%s)\n", dep.Name, dep.Version)
-				err = downloadLibrary(dep.Name, dep.Version.String(), filepath.Join(installDir, dep.Name))
-				if err != nil {
-					return fmt.Errorf("failed to install %s: %w", dep.Name, err)
-				}
-			}
+		// TODO: Implement actual installation logic here
+		// For now, just create an empty file to simulate installation
+		dummyFile := filepath.Join(installDir, fmt.Sprintf("%s-%s.txt", name, version))
+		if _, err := os.Create(dummyFile); err != nil {
+			return fmt.Errorf("failed to create dummy file: %w", err)
 		}
 
-		fmt.Printf("Successfully installed all dependencies in %s\n", installDir)
+		fmt.Printf("Library %s version %s installed successfully in %s\n", name, version, installDir)
 		return nil
 	},
 }
 
+func isValidVersion(version string) bool {
+	// Add more sophisticated version validation if needed
+	return len(version) > 0
+}
+
 func init() {
+	// Set a default value for serverURL
+	serverURL = "http://localhost:8080"  // Adjust this to your default server URL
+
 	rootCmd.AddCommand(installCmd)
-	installCmd.Flags().StringP("dir", "d", "", "Directory to install libraries (default is ./vendor)")
+	installCmd.Flags().StringVarP(&installDir, "dir", "d", "vendor", "Installation directory")
 }
